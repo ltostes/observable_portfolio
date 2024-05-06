@@ -1,5 +1,7 @@
 # Lucas Tostes Portfolio
 
-This is the home page of your new Observable Framework project.
+Welcome to my portfolio!
 
-For more, see <https://observablehq.com/framework/getting-started>.
+It is still majorly under construction, but you can find random pieces of work I did available in the tabs.
+
+Feel free to also check out my carrer history at [Linkedin](https://www.linkedin.com/in/lucasrmtostes/).
