@@ -32,8 +32,6 @@ retrievalInfo
 <div class="observablehq observablehq--block">${coloring_input}</div>
 <div class="observablehq observablehq--block">${teamname_input}</div>
 <div class="observablehq observablehq--block">${timeRange_input}</div>
-<div class="observablehq observablehq--block">${profileList_input}</div>
-<div class="observablehq observablehq--block">${multiProfiles_input}</div>
 
 <!-- BELOW ARE FEATURES CODE ONLY -->
 
@@ -69,64 +67,6 @@ const timeRange_input = Inputs.range([35, 140], {
   value: 70
 })
 const timeRange = Generators.input(timeRange_input)
-```
-
-```js
-//// Profile List
-const profileList_input = Inputs.textarea({
-    label: "Profile List",
-    submit: true,
-    value: `76561198045239417: elTostes
-76561199081589502: Rogerinho do Ingá
-76561198072099800: Leandro, O Zébio
-76561197988075974: Arret
-76561197989969303: Terra
-76561198030729173: Frefs
-76561198019340968: Diogo
-76561198178678687: Rust Cohle
-76561199019347586: Cano Carequinha
-76561198056952889: Pistoleiro do Sudoeste
-76561198143606012: Ahaab Himself
-76561199674847975: ilanvale`
-});
-
-const profileList_gen = Generators.observe(
-    (notify) => {
-        const inputted = () => notify(profileList_input.value);
-        inputted();
-        profileList_input.addEventListener("submit", inputted);
-        return () => profileList_input.removeEventListener("submit", inputted)
-    }
-    )
-```
-```js
-//// Profile List - Continuation
-// (Processing list after async operations before)
-const profileList = profileList_gen.split("\n").map(line => line.split(": ")[0])
-```
-
-```js
-//// Multi-Profiles List
-const multiProfiles_input = Inputs.textarea({
-    label: "Profile List",
-    submit: true,
-    value: `Rogerinho do Ingá: elTostes
-Arret: Terra`
-});
-
-const multiProfiles_gen = Generators.observe(
-    (notify) => {
-        const inputted = () => notify(multiProfiles_input.value);
-        inputted();
-        multiProfiles_input.addEventListener("submit", inputted);
-        return () => multiProfiles_input.removeEventListener("submit", inputted)
-    }
-    )
-```
-```js
-//// Multi-Profiles - Continuation
-// (Processing list after async operations before)
-const multiProfiles = multiProfiles_gen.split("\n").map(line => ({[line.split(": ")[0]] : line.split(": ")[1]}))
 ```
 
 <!-- ##### AUX ##### -->
