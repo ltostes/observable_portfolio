@@ -9,7 +9,10 @@
     "observable": "observable"
   },
   "dependencies": {
-    "@observablehq/framework": "^1.7.0"
+    "@observablehq/framework": "^1.7.0",
+    "axios": "^1.6.8",
+    "duckdb": "^0.10.2",
+    "node-fetch": "^3.3.2"
   },
   "devDependencies": {
     "rimraf": "^5.0.5"
