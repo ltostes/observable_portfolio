@@ -9,8 +9,21 @@ toc: false
 ```js
 Plot.dotX([1,2,3,4,5]).plot()
 ```
+
 ```js
-raw_data
+const profiles = FileAttachment("data/cs2teamdedication/data/profiles.json").json();
+const matches = FileAttachment("data/cs2teamdedication/data/matches.json").json();
+const retrievalInfo = FileAttachment("data/cs2teamdedication/data/retrievalinfo.json").json();
+```
+
+```js
+profiles
+```
+```js
+matches
+```
+```js
+retrievalInfo
 ```
 
 ### Configurations
@@ -23,96 +36,6 @@ raw_data
 <div class="observablehq observablehq--block">${multiProfiles_input}</div>
 
 <!-- BELOW ARE FEATURES CODE ONLY -->
-
-<!-- ##### DATA HANDLING #### -->
-```js
-// Raw data
-const rawdata = await fetchProfiles(profileList)
-  .then((results) => {
-    return results;
-  })
-  .catch((error) => {
-    console.error("Error in fetching profiles:", error);
-    return `Error in fetching profile: ${error}`;
-  })
-```
-
-
-```js
-// const raw_profiledata = rawdata
-//   // First, handling multi profiles (filtering mirrors and adding games to main profile)
-//   .filter((f) => !Object.keys(multi_profiles).includes(f.meta.name))
-//   .map((d) => ({
-//     ...d,
-//     games: [
-//       d.games,
-//       ...Object.entries(multi_profiles)
-//         .filter((f) => f[1] == d.meta.name)
-//         .map((d) => rawdata.find((f) => f.meta.name == d[0]).games)
-//     ]
-//       .flat()
-//       .sort((a, b) =>
-//         a.gameFinishedAt == b.gameFinishedAt
-//           ? 0
-//           : a.gameFinishedAt < b.gameFinishedAt
-//           ? 1
-//           : -1
-//       )
-//   }))
-//   // Now the base features
-//   .map((d) => ({
-//     profile: d.meta.name,
-//     steamId: d.meta.steam64Id,
-//     totalgamecount: d.games.length,
-//     recentgames: d.recentGameRatings.gamesPlayed,
-//     steamavatar: d.meta.steamAvatarUrl,
-//     games: d.games.map((g) => ({
-//       date_orig: new Date(g.gameFinishedAt),
-//       date: new Date(
-//         `${g.gameFinishedAt.slice(0, -1)}+${d3.format("02")(hours_offset)}:00`
-//       ),
-//       id: g.gameId,
-//       ...g
-//     })),
-//     gamesDates_orig: d.games.map((g) => new Date(g.gameFinishedAt)),
-//     gamesDates: d.games.map(
-//       (g) =>
-//         new Date(
-//           `${g.gameFinishedAt.slice(0, -1)}+${d3.format("02")(hours_offset)}:00`
-//         )
-//     ),
-//     gameIDs: d.games.map((g) => g.gameId)
-//   }))
-//   // Now calculated, so on and so forth
-//   .map((d) => ({
-//     ...d,
-//     lastGame: d.gamesDates[0],
-//     gamesLast30days_orig: d.gamesDates_orig.filter(
-//       (f) => d3.timeDay.count(f, new Date()) <= 30
-//     ),
-//     gamesLast30days: d.gamesDates.filter(
-//       (f) => d3.timeDay.count(f, new Date()) <= 30
-//     ),
-//     weekStreak: getWeekStreak(d.gamesDates)
-//   }))
-//   .map((d) => ({
-//     ...d,
-//     daysSinceLastGame: d3.timeDay.count(d.lastGame, new Date()),
-//     gameCountLast30days: d.gamesLast30days.length,
-//     personalPerfAverage: d3.mean(
-//       d.games
-//         .filter(
-//           (f) =>
-//             isDateWithinRange(
-//               f.date,
-//               d3.utcDay.offset(today, -timeRange),
-//               today
-//             ) && typeof f.ownTeamTotalLeetifyRatings[d.steamId] != "undefined"
-//         )
-//         .map((ig) => ig.ownTeamTotalLeetifyRatings[d.steamId])
-//     )
-//   }))
-```
 
 <!-- ##### INPUTS ##### -->
 ```js
@@ -245,32 +168,6 @@ function getDaysdata(gamesdata) {
 
 function getWeeksAgo(date) {
     return Math.floor(d3.timeDay.count(new Date(date), today) / 7)
-}
-
-async function fetchProfile(profile_num) {
-  const url = `https://api.leetify.com/api/profile/${profile_num}`;
-  try {
-    const response = await fetch(url);
-    const data = await response.json();
-    return data; // Return the fetched data
-  } catch (error) {
-    console.error("Error fetching profile:", profile_num, error);
-    throw error; // Throw an error if something goes wrong
-  }
-}
-
-async function fetchProfiles(profiles) {
-  try {
-    // Map over profiles and create a fetch promise for each
-    const promises = profiles.map((profile_num) => fetchProfile(profile_num));
-
-    // Wait for all promises to resolve
-    const results = await Promise.all(promises);
-    return results; // Return the array of results
-  } catch (error) {
-    console.error("Error fetching profiles:", error);
-    throw error; // Handle errors appropriately
-  }
 }
 
 function isDateWithinRange(dateToCheck, startDate, endDate) {
