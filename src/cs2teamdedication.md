@@ -1,29 +1,56 @@
 ---
 title: CS2 Team Dedication Report
 toc: false
+theme: air
 ---
 
 # ${teamname}
 #### _CS2 Team Dedication Performance Report_
 
 ```js
-Plot.dotX([1,2,3,4,5]).plot()
-```
+const x_domain = [today, d3.utcDay.offset(today, -timeRange)];
+function dateFilter(date) {
+  return (date >= x_domain[1]) && (date <= x_domain[0])
+}
 
-```js
-const profiles = FileAttachment("data/cs2teamdedication/data/profiles.json").json();
-const matches = FileAttachment("data/cs2teamdedication/data/matches.json").json();
-const retrievalInfo = FileAttachment("data/cs2teamdedication/data/retrievalinfo.json").json();
+view(Plot.plot({
+  width: width,
+  height: 700,
+  marginLeft: 150,
+  insetLeft: 50,
+  x: {
+    grid: true,
+    ticks: "weeks",
+    domain: x_domain,
+    type: 'utc',
+    axis: "top"
+  },
+  fy: {
+    marginTop: 25,
+    label: null,
+    // domain: fy_domain,
+    tickSize: 0
+  },
+  marks: [
+    Plot.dot(profilesMatches, Plot.dodgeY({
+      x: 'sessionDate',
+      fy: 'profile'
+    }))
+  ]
+}))
 ```
 
 ```js
 profiles
 ```
 ```js
-matches
+profilesMatches
 ```
 ```js
-retrievalInfo
+teamMatches
+```
+```js
+debuggingInfo
 ```
 
 ### Configurations
@@ -34,6 +61,15 @@ retrievalInfo
 <div class="observablehq observablehq--block">${timeRange_input}</div>
 
 <!-- BELOW ARE FEATURES CODE ONLY -->
+
+<!-- ##### Source Data ##### -->
+
+```js
+const profiles = FileAttachment("data/cs2teamdedication/data/profiles.json").json();
+const profilesMatches = FileAttachment("data/cs2teamdedication/data/profiles_matches.json").json();
+const teamMatches = FileAttachment("data/cs2teamdedication/data/team_matches.json").json();
+const debuggingInfo = FileAttachment("data/cs2teamdedication/data/infoForDebugging.json").json();
+```
 
 <!-- ##### INPUTS ##### -->
 ```js
