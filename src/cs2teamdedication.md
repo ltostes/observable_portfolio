@@ -25,7 +25,6 @@ const fy_domain = profilesDF.sort((a,b) =>
 ```
 
 ```js
-
 view(Plot.plot({
   width: width,
   height: 700,
@@ -65,6 +64,47 @@ teamMatches
 ```js
 debuggingInfo
 ```
+
+### Confetti
+
+```js
+// Importing confetti
+import confetti from "npm:canvas-confetti";
+```
+```js
+function createConfetti() {
+  const out = html`<canvas></canvas>`
+  const confet = confetti.create(out,{
+    // resize: true,
+    // useWorker: true
+  })
+  const config = {
+    origin: {
+      y: 1,
+      x: 0.4
+    },
+    startVelocity: 15,
+    decay: 0.95
+  }
+  const button = Inputs.button("Throw confetti! 🎉", {reduce: () => confet(config)})
+
+  return [out, button]
+}
+
+const conf1 = createConfetti();
+const conf2 = createConfetti();
+const conf3 = createConfetti();
+const conf4 = createConfetti();
+
+```
+<div class="grid grid-cols-4">
+  <div class="card">${conf1[0]}<div>${conf1[1]}</div></div>
+  <div class="card">${conf2[0]}<div>${conf2[1]}</div></div>
+  <div class="card">${conf3[0]}<div>${conf3[1]}</div></div>
+  <div class="card">${conf4[0]}<div>${conf4[1]}</div></div>
+</div>
+
+
 
 ### Configurations
 
