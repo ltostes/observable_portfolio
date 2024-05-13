@@ -28,3 +28,11 @@ export function dateRounding(date) {
         `${date.slice(0, -1)}+${d3.format("02")(hours_offset)}:00`
       ))
 }
+
+export function gameSort(field) {
+    return (a,b) => a[field] == b[field]
+    ? 0
+    : a[field] < b[field]
+    ? 1
+    : -1
+}

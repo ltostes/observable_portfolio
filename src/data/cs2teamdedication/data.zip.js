@@ -1,7 +1,7 @@
 import { readFile } from 'fs/promises';
 import JSZip from "jszip";
 
-import { PROFILE_LIST, MULTI_PROFILES, dateRounding } from './constantsdefinitions.js';
+import { PROFILE_LIST, MULTI_PROFILES, dateRounding, gameSort } from './constantsdefinitions.js';
 import { fetchProfiles, fetchMatches } from './fetchgetfunctions.js';
 
 async function main() {
@@ -60,8 +60,11 @@ async function main() {
     // Pruning matches dataframe
     const matchesBaseDF = matches.map(match => ({
         ...match,
-        sessionDate: dateRounding(match.createdAt)
+        sessionDate: dateRounding(match.createdAt),
+        numTeamMembers: match.playerStats.filter(f => profiles.map(p => p.meta.steam64Id).includes(f.steam64Id)).length,
+        playerStats: match.playerStats.map(playerStat => ({...playerStat, isTeamMember: profiles.map(p => p.meta.steam64Id).includes(playerStat.steam64Id)}))
     }))
+    .sort(gameSort("createdAt"))
     
     // Pruning profiles dataframe
     const profilesBaseDF = profiles
@@ -80,26 +83,20 @@ async function main() {
                             .map(profile => ({ // Listing all profiles that belong to this same profile (multi-profiles)
                                 ...profile,
                                 allProfiles: [ 
-                                    profile.name,
+                                    {id: profile.id, name: profile.name},
                                     ...Object.entries(MULTI_PROFILES)
                                         .filter(([extraprofile, mainprofile]) => mainprofile == profile.name)
-                                        .map(([extraprofile, mainprofile]) => extraprofile)
+                                        .map(([extraprofile, mainprofile]) => ({name: extraprofile, id: PROFILE_LIST.find(f => f.altname == extraprofile).id}))
                                 ],
                             }))
                             .map(profile => ({ // Populating gameIds with games from all profiles, in chronological order
                                 ...profile,
                                 gameIds: [ 
                                     ...profile.games
-                                    , ...profile.allProfiles.slice(1).map(ap => profiles.find(f => f.meta.name == ap)?.games ?? [])
+                                    , ...profile.allProfiles.slice(1).map(ap => profiles.find(f => f.meta.name == ap.name)?.games ?? [])
                                 ]
                                 .flat()
-                                .sort((a,b) => 
-                                    a.gameFinishedAt == b.gameFinishedAt
-                                    ? 0
-                                    : a.gameFinishedAt < b.gameFinishedAt
-                                    ? -1
-                                    : 1
-                                )
+                                .sort(gameSort("gameFinishedAt"))
                                 .map(game => game.gameId)
                             }))
                             .map(profile => ({ // Making sure there are no duplicates
@@ -110,36 +107,16 @@ async function main() {
                                 ...profile,
                                 games: profile.gameIds.map(gameId => {
                                     const matchDetails = matchesBaseDF.find(f => f.id == gameId);
-                                    const profilePlayerStats = matchDetails.playerStats.find(f => f.steam64Id == profile.id)
+                                    // TO FIX THIS HERE, SINCE IT DOESN'T CATCH MULTIPROFILES
+                                    const profilePlayerStats = matchDetails.playerStats.find(f => profile.allProfiles.map(ap => ap.id).includes(f.steam64Id))
                                     return {...matchDetails, profilePlayerStats}
                                 })
                             }))
 
-    // Building the profile-match detailed DF (exploding profile-match into separate rows)
-    const profileMatchesDF = profileBaseWithMatches.map(({name, id, avatar, recentRatings, personalBestsCS2, games}) => [
-        ...games.map(game => ({
-            profile: name,
-            profileDetails: {id, avatar, recentRatings, personalBestsCS2},
-            ...game
-        }))
-    ]).flat()
-    
-    // Final profileDF (with game-based calculated metrics too)
-    const profilesDF = profileBaseWithMatches.map(({name, id, avatar, recentRatings, personalBestsCS2, games}) => ({
-        name,
-        id,
-        avatar,
-        recentRatings,
-        personalBestsCS2,
-        // Here goes the calculated stats,
-    }))
-
     // Building the team matches DF
     const teamMatchesDF = matchesBaseDF.map(match => ({
         profile: "Team",
-        ...match,
-        numTeamMembers: match.playerStats.filter(f => profiles.map(p => p.meta.steam64Id).includes(f.steam64Id)).length,
-        playerStats: match.playerStats.map(playerStat => ({...playerStat, isTeamMember: profiles.map(p => p.meta.steam64Id).includes(playerStat.steam64Id)}))
+        ...match
     }))
 
     // infoForDebugging = {...infoForDebugging, profilesBaseDF, profileBaseWithMatches, profileMatchesDF, profilesDF};
@@ -147,14 +124,12 @@ async function main() {
     // Output a ZIP archive to stdout.
     const zip = new JSZip();
     zip.file("infoForDebugging.json", JSON.stringify(infoForDebugging, null, 2)); // Used for debugging this data loader
-    zip.file("profiles.json", JSON.stringify(profilesDF, null, 2));
-    zip.file("profiles_matches.json", JSON.stringify(profileMatchesDF, null, 2));
+    zip.file("profiles_matches.json", JSON.stringify(profileBaseWithMatches, null, 2));
     zip.file("team_matches.json", JSON.stringify(teamMatchesDF, null, 2));
     zip.file("raw_profiles.json", JSON.stringify(profiles, null, 2));
     zip.file("raw_matches.json", JSON.stringify(matches, null, 2));
     zip.generateNodeStream().pipe(process.stdout);
     
-
 }
 
 main().catch(err => console.error('An error occurred:', err));

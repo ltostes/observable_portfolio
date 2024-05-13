@@ -13,6 +13,19 @@ function dateFilter(date) {
   return (date >= x_domain[1]) && (date <= x_domain[0])
 }
 
+const ordering_1 = "sessionStreak";
+const ordering_2 = "daysSinceLastGame";
+const ordering_3 = "gameCountLast30days";
+
+const fy_domain = profilesDF.sort((a,b) => 
+                      d3.descending(a[ordering_1], b[ordering_1]) ||
+                      d3.ascending(a[ordering_2], b[ordering_2]) ||
+                      d3.descending(a[ordering_3], b[ordering_3])
+                    ).map(p => p.name)
+```
+
+```js
+
 view(Plot.plot({
   width: width,
   height: 700,
@@ -28,11 +41,11 @@ view(Plot.plot({
   fy: {
     marginTop: 25,
     label: null,
-    // domain: fy_domain,
+    domain: fy_domain,
     tickSize: 0
   },
   marks: [
-    Plot.dot(profilesMatches, Plot.dodgeY({
+    Plot.dot(profileMatchesDF, Plot.dodgeY({
       x: 'sessionDate',
       fy: 'profile'
     }))
@@ -41,10 +54,10 @@ view(Plot.plot({
 ```
 
 ```js
-profiles
+profilesDF
 ```
 ```js
-profilesMatches
+profileMatchesDF
 ```
 ```js
 teamMatches
@@ -65,10 +78,43 @@ debuggingInfo
 <!-- ##### Source Data ##### -->
 
 ```js
-const profiles = FileAttachment("data/cs2teamdedication/data/profiles.json").json();
-const profilesMatches = FileAttachment("data/cs2teamdedication/data/profiles_matches.json").json();
+const profileBaseWithMatches = FileAttachment("data/cs2teamdedication/data/profiles_matches.json").json();
 const teamMatches = FileAttachment("data/cs2teamdedication/data/team_matches.json").json();
 const debuggingInfo = FileAttachment("data/cs2teamdedication/data/infoForDebugging.json").json();
+```
+
+```js
+// Enhancing profile features
+const profilesDF = profileBaseWithMatches.map(profile => ({
+  ...profile,
+  sessionsPlayed: [...new Set(profile.games.filter(g => g.numTeamMembers > 1).map(g => g.sessionDate))],
+  gameCountLast30days: profile.games.filter(f => isDateWithinRange(f.sessionDate, d3.utcDay.offset(today, -timeRange),today)).length,
+  daysSinceLastGame: d3.timeDay.count(new Date(profile.games[0].sessionDate), today)
+
+})).map(profile => ({
+  ...profile,
+  sessionStreak: profile.sessionsPlayed.reduce((acc, s, i) => {
+    return s == teamSessions[i] && acc.onStreak ? {current: acc.current + 1, onStreak: true} : {current: acc.current, onStreak: false}
+  }, {current: 0, onStreak: true}).current
+}))
+
+
+```
+```js
+// Generating profile-match DF
+const profileMatchesDF = profilesDF.map(({name, id, avatar, recentRatings, personalBestsCS2, games}) => [
+    ...games.map(game => ({
+        profile: name,
+        profileDetails: {id, avatar, recentRatings, personalBestsCS2},
+        ...game
+    }))
+]).flat()
+```
+
+```js
+// Team stats
+const teamSessions = [...new Set(teamMatches.filter(g => g.numTeamMembers > 1).map(tm => tm.sessionDate))]
+view(teamSessions)
 ```
 
 <!-- ##### INPUTS ##### -->
