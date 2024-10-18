@@ -18,7 +18,7 @@ async function main() {
     }
 
     // Getting the cache of matches details
-    const matchesCachePath = './src/.observablehq/cache/data/cs2teamdedication/data/matches.json';
+    const matchesCachePath = './src/.observablehq/cache/cs2teamdedication/data/data/matches.json';
     let cachedMatches = [];
     try {
         // Attempt to read the file
@@ -36,7 +36,9 @@ async function main() {
 
     // Calculating the matches we have yet to retrieve
     const allPlayedMatches = [...new Set(profiles.map(p => [...p.games.map(g => g.gameId)]).flat())];
-    const matchesToRetrieve = allPlayedMatches.filter(f => !cachedMatches.map(m => m.id).includes(f));
+    const matchesToRetrieve = allPlayedMatches
+                                    .filter(f => !cachedMatches.map(m => m.id).includes(f))
+                                    .filter(f => f.length > 30);
 
     infoForDebugging = {...infoForDebugging, profiles, allPlayedMatches, matchesToRetrieve};
 
@@ -80,38 +82,38 @@ async function main() {
 
     // Profile-match relations, considering multi profiles
     const profileBaseWithMatches = profilesBaseDF
-                            .map(profile => ({ // Listing all profiles that belong to this same profile (multi-profiles)
-                                ...profile,
-                                allProfiles: [ 
-                                    {id: profile.id, name: profile.name},
-                                    ...Object.entries(MULTI_PROFILES)
-                                        .filter(([extraprofile, mainprofile]) => mainprofile == profile.name)
-                                        .map(([extraprofile, mainprofile]) => ({name: extraprofile, id: PROFILE_LIST.find(f => f.altname == extraprofile).id}))
-                                ],
-                            }))
-                            .map(profile => ({ // Populating gameIds with games from all profiles, in chronological order
-                                ...profile,
-                                gameIds: [ 
-                                    ...profile.games
-                                    , ...profile.allProfiles.slice(1).map(ap => profiles.find(f => f.meta.name == ap.name)?.games ?? [])
-                                ]
-                                .flat()
-                                .sort(gameSort("gameFinishedAt"))
-                                .map(game => game.gameId)
-                            }))
-                            .map(profile => ({ // Making sure there are no duplicates
-                                ...profile,
-                                gameIds: [...new Set(profile.gameIds)]
-                            }))
-                            .map(profile => ({ // Populating with match details
-                                ...profile,
-                                games: profile.gameIds.map(gameId => {
-                                    const matchDetails = matchesBaseDF.find(f => f.id == gameId);
-                                    // TO FIX THIS HERE, SINCE IT DOESN'T CATCH MULTIPROFILES
-                                    const profilePlayerStats = matchDetails.playerStats.find(f => profile.allProfiles.map(ap => ap.id).includes(f.steam64Id))
-                                    return {...matchDetails, profilePlayerStats}
-                                })
-                            }))
+                            // .map(profile => ({ // Listing all profiles that belong to this same profile (multi-profiles)/
+                            //     ...profile,
+                            //     allProfiles: [ 
+                            //         {id: profile.id, name: profile.name},
+                            //         ...Object.entries(MULTI_PROFILES)
+                            //             .filter(([extraprofile, mainprofile]) => mainprofile == profile.name)
+                            //             .map(([extraprofile, mainprofile]) => ({name: extraprofile, id: PROFILE_LIST.find(f => f.altname == extraprofile).id}))
+                            //     ],
+                            // }))
+                            // .map(profile => ({ // Populating gameIds with games from all profiles, in chronological order
+                            //     ...profile,
+                            //     gameIds: [ 
+                            //         ...profile.games
+                            //         , ...profile.allProfiles.slice(1).map(ap => profiles.find(f => f.meta.name == ap.name)?.games ?? [])
+                            //     ]
+                            //     .flat()
+                            //     .sort(gameSort("gameFinishedAt"))
+                            //     .map(game => game.gameId)
+                            // }))
+                            // .map(profile => ({ // Making sure there are no duplicates
+                            //     ...profile,
+                            //     gameIds: [...new Set(profile.gameIds)]
+                            // }))
+                            // .map(profile => ({ // Populating with match details
+                            //     ...profile,
+                            //     games: profile.gameIds.map(gameId => {
+                            //         const matchDetails = matchesBaseDF.find(f => f.id == gameId);
+                            //         // TO FIX THIS HERE, SINCE IT DOESN'T CATCH MULTIPROFILES
+                            //         const profilePlayerStats = matchDetails.playerStats.find(f => profile.allProfiles.map(ap => ap.id).includes(f.steam64Id))
+                            //         return {...matchDetails, profilePlayerStats}
+                            //     })
+                            // }))
 
     // Building the team matches DF
     const teamMatchesDF = matchesBaseDF.map(match => ({
@@ -119,12 +121,12 @@ async function main() {
         ...match
     }))
 
-    // infoForDebugging = {...infoForDebugging, profilesBaseDF, profileBaseWithMatches, profileMatchesDF, profilesDF};
+    infoForDebugging = {...infoForDebugging, profilesBaseDF, profileBaseWithMatches, profileMatchesDF, profilesDF};
 
     // Output a ZIP archive to stdout.
     const zip = new JSZip();
     zip.file("infoForDebugging.json", JSON.stringify(infoForDebugging, null, 2)); // Used for debugging this data loader
-    zip.file("profiles_matches.json", JSON.stringify(profileBaseWithMatches, null, 2));
+    // zip.file("profiles_matches.json", JSON.stringify(profileBaseWithMatches, null, 2));
     zip.file("team_matches.json", JSON.stringify(teamMatchesDF, null, 2));
     zip.file("raw_profiles.json", JSON.stringify(profiles, null, 2));
     zip.file("raw_matches.json", JSON.stringify(matches, null, 2));
