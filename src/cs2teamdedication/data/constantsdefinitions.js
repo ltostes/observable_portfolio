@@ -13,6 +13,7 @@ export const PROFILE_LIST = [
         {id: "76561198056952889", altname: "Pistoleiro do Sudoeste"},
         {id: "76561198143606012", altname: "Ahaab Himself"},
         {id: "76561199674847975", altname: "ilanvale"},
+        {id: "76561198067038029", altname: "fafico"}
     ]
 
 export const MULTI_PROFILES = {
@@ -27,4 +28,12 @@ export function dateRounding(date) {
     return d3.timeFormat('%Y-%m-%d')(new Date(
         `${date.slice(0, -1)}+${d3.format("02")(hours_offset)}:00`
       ))
+}
+
+export function gameSort(field) {
+    return (a,b) => a[field] == b[field]
+    ? 0
+    : a[field] < b[field]
+    ? 1
+    : -1
 }
