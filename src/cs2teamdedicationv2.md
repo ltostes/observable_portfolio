@@ -254,7 +254,6 @@ function achievementBlock(profile, blockWidth, i) {
 ```js
 const profileBaseWithMatches = FileAttachment("cs2teamdedication/data/data/profiles_matches.json").json();
 const teamMatches = FileAttachment("cs2teamdedication/data/data/team_matches.json").json();
-const debuggingInfo = FileAttachment("cs2teamdedication/data/data/infoForDebugging.json").json();
 const rawProfiles = FileAttachment("cs2teamdedication/data/data/raw_profiles.json").json();
 const rawMatches = FileAttachment("cs2teamdedication/data/data/raw_matches.json").json();
 ```
@@ -272,7 +271,7 @@ const profilesDF = profileBaseWithMatches.map(profile => ({
   ...profile,
   sessionsPlayed: [...new Set(profile.games.filter(g => g.numTeamMembers > 1).map(g => g.sessionDate))],
   gameCountLast30days: profile.games.filter(f => isDateWithinRange(f.sessionDate, d3.utcDay.offset(today, -timeRange),today)).length,
-  daysSinceLastGame: d3.timeDay.count(new Date(profile.games[0].sessionDate), today)
+  daysSinceLastGame: profile.games.length > 0 ? d3.timeDay.count(new Date(profile.games[0].sessionDate), today) : -1
 
 })).map(profile => ({
   ...profile,
@@ -346,7 +345,7 @@ function getSessionTeamStats(session) {
         name,
         avatar,
         sessionStreak,
-        lastSessionGamesFeats: games.filter(f => f.sessionDate == session).map(g => ({...g.profilePlayerStats, sessionStreak})),
+        lastSessionGamesFeats: games.filter(f => f.sessionDate == session && f.numTeamMembers > 1).map(g => ({...g.profilePlayerStats, sessionStreak})),
       })).filter( f => f.lastSessionGamesFeats.length > 0).map(({name, avatar, sessionStreak, lastSessionGamesFeats : gf}) => ({
         name,
         avatar,
@@ -440,4 +439,21 @@ const today = new Date(
 <!-- Aux Functions -->
 ```js
 import { getWeekStreak, getDaysdata, getWeeksAgo, isDateWithinRange } from './cs2teamdedication/auxFunctions.js';
+```
+
+
+#### Debuging
+
+```js
+const debuggingInfo = FileAttachment("cs2teamdedication/data/data/infoForDebugging.json").json();
+```
+
+```js
+debuggingInfo
+```
+
+Test
+```js
+// debuggingInfo.teamMatchesDF.map(d => ({t: d.sessionDate, ...d}))
+profilesDF
 ```

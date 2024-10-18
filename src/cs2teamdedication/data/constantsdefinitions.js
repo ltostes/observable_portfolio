@@ -13,6 +13,7 @@ export const PROFILE_LIST = [
         {id: "76561198056952889", altname: "Pistoleiro do Sudoeste"},
         {id: "76561198143606012", altname: "Ahaab Himself"},
         {id: "76561199674847975", altname: "ilanvale"},
+        {id: "76561198067038029", altname: "fafico"}
     ]
 
 export const MULTI_PROFILES = {
